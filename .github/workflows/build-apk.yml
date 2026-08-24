@@ -32,7 +32,7 @@ jobs:
         if: failure()
         run: |
           echo "===== compile / build errors ====="
-          grep -aE "^(e: |w: \[ksp\]|FAILURE:|\* What went wrong|Caused by:|> )" build.log | head -40 || true
+          grep -aE "^(e: |FAILURE:|\* What went wrong|Caused by:)" build.log | head -60 || true
           echo "===== failing tests ====="
           grep -aE "FAILED|AssertionError" build.log | head -20 || true
 
