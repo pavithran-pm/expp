@@ -37,6 +37,9 @@ def status(key):
 def database_rows():
     if not os.path.exists("/tmp/paisa.db"):
         return "(database not pulled)"
+    # A stale shared-memory file stops SQLite replaying the write-ahead log.
+    if os.path.exists("/tmp/paisa.db-shm"):
+        os.remove("/tmp/paisa.db-shm")
     try:
         con = sqlite3.connect("/tmp/paisa.db")
         rows = con.execute(
