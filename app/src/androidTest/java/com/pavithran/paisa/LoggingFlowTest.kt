@@ -1,8 +1,6 @@
 package com.pavithran.paisa
 
 import androidx.compose.ui.semantics.SemanticsProperties
-import androidx.compose.ui.test.SemanticsMatcher
-import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
@@ -10,8 +8,8 @@ import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
-import androidx.compose.ui.text.AnnotatedString
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -55,9 +53,11 @@ class LoggingFlowTest {
     fun inputFieldClearsAfterLogging() {
         log("60 chai")
         waitForText("₹60")
-        rule.onAllNodes(hasSetTextAction()).onFirst().assert(
-            SemanticsMatcher.expectValue(SemanticsProperties.EditableText, AnnotatedString(""))
-        )
+        // An empty field carries no EditableText semantics at all, so read the
+        // property defensively rather than expecting an empty AnnotatedString.
+        val node = rule.onAllNodes(hasSetTextAction()).onFirst().fetchSemanticsNode()
+        val editable = node.config.getOrNull(SemanticsProperties.EditableText)?.text.orEmpty()
+        assertEquals("field should be empty after logging", "", editable)
     }
 
     @Test
