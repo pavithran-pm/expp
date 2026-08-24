@@ -23,14 +23,18 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Unit tests (parser + CSV backup)
-        run: ./gradlew test --stacktrace
+      - name: Test and build APKs
+        run: |
+          set -o pipefail
+          ./gradlew test assembleDebug assembleRelease 2>&1 | tee build.log
 
-      - name: Build debug APK
-        run: ./gradlew assembleDebug --stacktrace
-
-      - name: Build release APK
-        run: ./gradlew assembleRelease --stacktrace
+      - name: Failure summary
+        if: failure()
+        run: |
+          echo "===== compile / build errors ====="
+          grep -aE "^(e: |w: \[ksp\]|FAILURE:|\* What went wrong|Caused by:|> )" build.log | head -40 || true
+          echo "===== failing tests ====="
+          grep -aE "FAILED|AssertionError" build.log | head -20 || true
 
       - name: Rename APKs
         run: |
