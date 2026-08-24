@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.room)
 }
 
 // Release signing credentials live in local.properties (git-ignored), never in this file.
@@ -73,8 +74,14 @@ kotlin {
     }
 }
 
+// The Room Gradle plugin gives each variant its own schema directory. Setting
+// room.schemaLocation through KSP instead makes the debug and release tasks
+// write the same file in parallel, and Room then reads back a truncated schema.
+room {
+    schemaDirectory("$projectDir/schemas")
+}
+
 ksp {
-    arg("room.schemaLocation", "$projectDir/schemas")
     arg("room.generateKotlin", "true")
 }
 
