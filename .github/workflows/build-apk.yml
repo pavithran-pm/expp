@@ -98,31 +98,41 @@ jobs:
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none -camera-front none
           script: |
+            set +e
             adb install -r app/build/outputs/apk/debug/app-debug.apk
-            python3 scripts/demo.py
-            if ./gradlew connectedDebugAndroidTest > /tmp/androidtest.log 2>&1; then
-              echo "## Instrumented UI tests: PASS" >> docs/emulator-run.md
-            else
-              echo "## Instrumented UI tests: FAIL" >> docs/emulator-run.md
-            fi
-            echo '```' >> docs/emulator-run.md
-            grep -aE "Starting [0-9]+ tests|tests? completed|FAILED|BUILD (SUCCESSFUL|FAILED)" /tmp/androidtest.log | head -15 >> docs/emulator-run.md
-            echo '```' >> docs/emulator-run.md
-            cat /tmp/androidtest.log | tail -40
+            python3 scripts/demo.py 2>&1 | tee /tmp/demo.log
+            echo "demo_exit=${PIPESTATUS[0]}" > /tmp/status
+            ./gradlew connectedDebugAndroidTest > /tmp/androidtest.log 2>&1
+            echo "tests_exit=$?" >> /tmp/status
+            # Pull the database (with its WAL) so the report can show real rows.
+            DB=/data/data/com.pavithran.paisa/databases/paisa.db
+            adb exec-out run-as com.pavithran.paisa cat $DB > /tmp/paisa.db
+            adb exec-out run-as com.pavithran.paisa cat $DB-wal > /tmp/paisa.db-wal
+            adb exec-out run-as com.pavithran.paisa cat $DB-shm > /tmp/paisa.db-shm
+            exit 0
 
-      - name: Commit screenshots
+      - name: Write run report
+        if: always()
+        run: python3 scripts/report.py
+
+      - name: Commit screenshots and report
         if: always()
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           if [ -n "$(git status --porcelain docs)" ]; then
-            git add docs/screenshots docs/emulator-run.md
-            git commit -m "Screenshots from the emulator run [skip ci]"
+            git add docs
+            git commit -m "Emulator run results [skip ci]"
             git pull --rebase origin ${{ github.ref_name }}
             git push origin HEAD:${{ github.ref_name }}
           else
-            echo "no screenshots produced"
+            echo "nothing to commit"
           fi
+
+      - name: Fail if the emulator run failed
+        if: always()
+        run: |
+          grep -q "tests_exit=0" /tmp/status && grep -q "demo_exit=0" /tmp/status
 
       - name: Upload full-size screenshots
         if: always()

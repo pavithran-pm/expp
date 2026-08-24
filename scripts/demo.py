@@ -145,24 +145,7 @@ def main():
     time.sleep(3)
     shot("08-voice", "Mic tapped — recogniser state / error handling")
 
-    rows = sh(
-        f"adb shell run-as {PKG} sqlite3 /data/data/{PKG}/databases/paisa.db "
-        f"'select amount, category, ifnull(merchant,\"-\"), needsReview, rawText from expenses order by id'"
-    )
-    db = (rows.stdout or rows.stderr).strip()
-
-    with open("docs/emulator-run.md", "w") as f:
-        f.write("# Emulator run\n\n")
-        f.write("Pixel 6 profile, API 34, driven through adb + the accessibility tree.\n\n")
-        f.write("## What the database held afterwards\n\n")
-        f.write("`amount | category | merchant | needsReview | rawText`\n\n```\n")
-        f.write(db + "\n```\n\n")
-        f.write("## Screens\n\n")
-        for name, caption in SHOTS:
-            f.write(f"### {caption}\n\n![{name}](screenshots/{name}.png)\n\n")
-
-    print("=== database rows ===")
-    print(db)
+    print("walkthrough complete")
     return 0
 
 
