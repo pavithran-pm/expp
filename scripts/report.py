@@ -57,6 +57,7 @@ def database_rows():
 def main():
     tests_ok = status("tests_exit") == "0"
     demo_ok = status("demo_exit") == "0"
+    print("status file:\n" + read("/tmp/status"))
 
     with open(REPORT, "w") as f:
         f.write("# Emulator run\n\n")
@@ -79,7 +80,7 @@ def main():
         f.write(read("/tmp/androidtest.log", tail=45))
         f.write("\n```\n\n")
 
-        if not demo_ok:
+        if not (demo_ok and tests_ok):
             f.write("## Walkthrough output\n\n```\n")
             f.write(read("/tmp/demo.log", tail=40))
             f.write("\n```\n")

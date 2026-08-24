@@ -97,19 +97,7 @@ jobs:
           ram-size: 4096M
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none -camera-front none
-          script: |
-            set +e
-            adb install -r app/build/outputs/apk/debug/app-debug.apk
-            python3 scripts/demo.py 2>&1 | tee /tmp/demo.log
-            echo "demo_exit=${PIPESTATUS[0]}" > /tmp/status
-            ./gradlew connectedDebugAndroidTest > /tmp/androidtest.log 2>&1
-            echo "tests_exit=$?" >> /tmp/status
-            # Pull the database (with its WAL) so the report can show real rows.
-            DB=/data/data/com.pavithran.paisa/databases/paisa.db
-            adb exec-out run-as com.pavithran.paisa cat $DB > /tmp/paisa.db
-            adb exec-out run-as com.pavithran.paisa cat $DB-wal > /tmp/paisa.db-wal
-            adb exec-out run-as com.pavithran.paisa cat $DB-shm > /tmp/paisa.db-shm
-            exit 0
+          script: bash scripts/emulator_run.sh
 
       - name: Write run report
         if: always()
