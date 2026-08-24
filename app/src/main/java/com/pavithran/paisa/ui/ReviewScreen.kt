@@ -24,7 +24,11 @@ fun ReviewScreen(
             )
         } else {
             Text(
-                "${items.size} entr${if (items.size == 1) "y" else "ies"} need a quick check",
+                if (items.size == 1) {
+                    "1 entry needs a quick check"
+                } else {
+                    "${items.size} entries need a quick check"
+                },
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(16.dp)

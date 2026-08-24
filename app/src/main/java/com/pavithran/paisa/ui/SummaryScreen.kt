@@ -36,7 +36,9 @@ import java.time.YearMonth
 fun SummaryScreen(viewModel: PaisaViewModel) {
     val month by viewModel.selectedMonth.collectAsStateWithLifecycle()
     val total by viewModel.monthTotal.collectAsStateWithLifecycle()
-    val categories by viewModel.monthCategories.collectAsStateWithLifecycle()
+    val allCategories by viewModel.monthCategories.collectAsStateWithLifecycle()
+    // A row flagged for review has no amount yet; an empty bar is just noise.
+    val categories = allCategories.filter { it.total > 0 }
 
     val today = LocalDate.now(Dates.zone)
     val daysElapsed = if (month == YearMonth.now(Dates.zone)) {

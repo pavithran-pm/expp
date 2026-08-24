@@ -100,15 +100,23 @@ jobs:
           script: |
             adb install -r app/build/outputs/apk/debug/app-debug.apk
             python3 scripts/demo.py
-            ./gradlew connectedDebugAndroidTest || echo "INSTRUMENTED_TESTS_FAILED"
+            if ./gradlew connectedDebugAndroidTest > /tmp/androidtest.log 2>&1; then
+              echo "## Instrumented UI tests: PASS" >> docs/emulator-run.md
+            else
+              echo "## Instrumented UI tests: FAIL" >> docs/emulator-run.md
+            fi
+            echo '```' >> docs/emulator-run.md
+            grep -aE "Starting [0-9]+ tests|tests? completed|FAILED|BUILD (SUCCESSFUL|FAILED)" /tmp/androidtest.log | head -15 >> docs/emulator-run.md
+            echo '```' >> docs/emulator-run.md
+            cat /tmp/androidtest.log | tail -40
 
       - name: Commit screenshots
         if: always()
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          if [ -n "$(git status --porcelain docs/screenshots)" ]; then
-            git add docs/screenshots
+          if [ -n "$(git status --porcelain docs)" ]; then
+            git add docs/screenshots docs/emulator-run.md
             git commit -m "Screenshots from the emulator run [skip ci]"
             git pull --rebase origin ${{ github.ref_name }}
             git push origin HEAD:${{ github.ref_name }}

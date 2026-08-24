@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -133,7 +134,11 @@ fun ExpenseList(
     showDateHeaders: Boolean = true
 ) {
     val grouped = remember(expenses) { expenses.groupBy { Dates.dayLabel(it.timestamp) } }
-    LazyColumn(modifier = Modifier.fillMaxSize()) {
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        // Leave room for the mic FAB so the last row is never hidden behind it.
+        contentPadding = PaddingValues(bottom = 96.dp)
+    ) {
         grouped.forEach { (day, rows) ->
             if (showDateHeaders) {
                 item(key = "header-$day") { DateHeader(day, rows.sumOf { it.amount }) }

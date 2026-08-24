@@ -1,5 +1,8 @@
 package com.pavithran.paisa
 
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
@@ -7,6 +10,7 @@ import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.text.AnnotatedString
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Rule
 import org.junit.Test
@@ -45,6 +49,15 @@ class LoggingFlowTest {
         log("1.2k petrol")
         waitForText("₹1,200")
         waitForText("Transport")
+    }
+
+    @Test
+    fun inputFieldClearsAfterLogging() {
+        log("60 chai")
+        waitForText("₹60")
+        rule.onAllNodes(hasSetTextAction()).onFirst().assert(
+            SemanticsMatcher.expectValue(SemanticsProperties.EditableText, AnnotatedString(""))
+        )
     }
 
     @Test
