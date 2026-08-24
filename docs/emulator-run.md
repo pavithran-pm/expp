@@ -7,12 +7,6 @@ tree rather than fixed coordinates.
 - Scripted walkthrough: **ok**
 - Instrumented UI tests: **pass**
 
-## Expenses in the database afterwards
-
-```
-(could not read database: no such table: expenses)
-```
-
 ## Screens
 
 ### Fresh install — empty state, text entry, mic button
@@ -50,6 +44,10 @@ tree rather than fixed coordinates.
 ## Instrumented test output
 
 ```
+> Task :app:checkDebugDuplicateClasses UP-TO-DATE
+> Task :app:mergeExtDexDebug UP-TO-DATE
+> Task :app:mergeLibDexDebug UP-TO-DATE
+> Task :app:mergeProjectDexDebug UP-TO-DATE
 > Task :app:mergeDebugJniLibFolders UP-TO-DATE
 > Task :app:mergeDebugNativeLibs UP-TO-DATE
 > Task :app:stripDebugDebugSymbols UP-TO-DATE
@@ -65,23 +63,19 @@ tree rather than fixed coordinates.
 > Task :app:mergeDebugAndroidTestAssets
 > Task :app:compressDebugAndroidTestAssets FROM-CACHE
 > Task :app:desugarDebugAndroidTestFileDependencies FROM-CACHE
+> Task :app:dexBuilderDebugAndroidTest FROM-CACHE
+> Task :app:mergeDebugAndroidTestGlobalSynthetics FROM-CACHE
+> Task :app:processDebugAndroidTestJavaRes
 > Task :app:mergeDebugAndroidTestJniLibFolders
 > Task :app:checkDebugAndroidTestDuplicateClasses
-> Task :app:mergeDebugAndroidTestNativeLibs NO-SOURCE
 > Task :app:mergeExtDexDebugAndroidTest FROM-CACHE
 > Task :app:mergeLibDexDebugAndroidTest FROM-CACHE
+> Task :app:mergeProjectDexDebugAndroidTest FROM-CACHE
+> Task :app:mergeDebugAndroidTestJavaResource
+> Task :app:mergeDebugAndroidTestNativeLibs NO-SOURCE
 > Task :app:stripDebugAndroidTestDebugSymbols NO-SOURCE
 > Task :app:validateSigningDebugAndroidTest
 > Task :app:writeDebugAndroidTestSigningConfigVersions
-> Task :app:kspDebugAndroidTestKotlin
-> Task :app:compileDebugAndroidTestKotlin
-> Task :app:compileDebugAndroidTestJavaWithJavac NO-SOURCE
-> Task :app:copyRoomSchemas NO-SOURCE
-> Task :app:dexBuilderDebugAndroidTest
-> Task :app:mergeDebugAndroidTestGlobalSynthetics FROM-CACHE
-> Task :app:processDebugAndroidTestJavaRes
-> Task :app:mergeDebugAndroidTestJavaResource
-> Task :app:mergeProjectDexDebugAndroidTest
 > Task :app:packageDebugAndroidTest
 > Task :app:createDebugAndroidTestApkListingFileRedirect
 [EmulatorConsole]: Failed to start Emulator console for 5554
@@ -89,11 +83,11 @@ tree rather than fixed coordinates.
 > Task :app:connectedDebugAndroidTest
 Starting 4 tests on emulator-5554 - 14
 
-emulator-5554 - 14 Tests 2/4 completed. (0 skipped) (0 failed)
+emulator-5554 - 14 Tests 3/4 completed. (0 skipped) (0 failed)
 Finished 4 tests on emulator-5554 - 14
-gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__reactivecircus_android-emulator-runner-1787596493949.json
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__reactivecircus_android-emulator-runner-1787598024146.json
 
-BUILD SUCCESSFUL in 46s
-66 actionable tasks: 20 executed, 11 from cache, 35 up-to-date
+BUILD SUCCESSFUL in 28s
+66 actionable tasks: 16 executed, 15 from cache, 35 up-to-date
 ```
 
