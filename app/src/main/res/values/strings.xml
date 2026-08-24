@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Paisa</string>
+    <string name="widget_label">Paisa · Log expense</string>
+    <string name="widget_description">Tap to log an expense by voice.</string>
+</resources>
