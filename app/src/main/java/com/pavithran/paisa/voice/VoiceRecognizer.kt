@@ -90,7 +90,9 @@ class VoiceRecognizer(
             onState(VoiceState.Listening)
         }
 
-        override fun onBeginningOfSpeech() = Log.d(TAG, "beginning of speech")
+        override fun onBeginningOfSpeech() {
+            Log.d(TAG, "beginning of speech")
+        }
 
         override fun onRmsChanged(rmsdB: Float) = Unit
 

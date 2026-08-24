@@ -20,8 +20,6 @@ import androidx.glance.layout.padding
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
-import androidx.glance.unit.ColorProvider
-import androidx.compose.ui.graphics.Color
 import com.pavithran.paisa.data.Dates
 import com.pavithran.paisa.data.ExpenseRepository
 import com.pavithran.paisa.data.Money
@@ -53,12 +51,12 @@ class PaisaWidget : GlanceAppWidget() {
                         text = "🎙  Log expense",
                         style = TextStyle(
                             fontWeight = FontWeight.Medium,
-                            color = ColorProvider(Color.Black, Color.White)
+                            color = GlanceTheme.colors.onPrimaryContainer
                         )
                     )
                     Text(
                         text = "Today ${Money.format(total)}",
-                        style = TextStyle(color = ColorProvider(Color.Black, Color.White))
+                        style = TextStyle(color = GlanceTheme.colors.onPrimaryContainer)
                     )
                 }
             }
