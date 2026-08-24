@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Collects everything the emulator run produced into docs/emulator-run.md."""
 import os
-import sqlite3
 
 REPORT = "docs/emulator-run.md"
 SHOTS = "docs/screenshots"
@@ -34,29 +33,6 @@ def status(key):
     return "?"
 
 
-def database_rows():
-    if not os.path.exists("/tmp/paisa.db"):
-        return "(database not pulled)"
-    # A stale shared-memory file stops SQLite replaying the write-ahead log.
-    if os.path.exists("/tmp/paisa.db-shm"):
-        os.remove("/tmp/paisa.db-shm")
-    try:
-        con = sqlite3.connect("/tmp/paisa.db")
-        rows = con.execute(
-            "SELECT amount, category, IFNULL(merchant, '-'), needsReview, rawText "
-            "FROM expenses ORDER BY id"
-        ).fetchall()
-        con.close()
-    except Exception as exc:  # noqa: BLE001 - report whatever went wrong
-        return f"(could not read database: {exc})"
-    header = f"{'amount':>8} | {'category':<10} | {'merchant':<16} | review | rawText"
-    out = [header, "-" * len(header)]
-    for amount, category, merchant, review, raw in rows:
-        flag = "yes" if review else "no"
-        out.append(f"{amount:>8.0f} | {category:<10} | {merchant:<16} | {flag:<6} | {raw}")
-    return "\n".join(out)
-
-
 def main():
     tests_ok = status("tests_exit") == "0"
     demo_ok = status("demo_exit") == "0"
@@ -69,10 +45,6 @@ def main():
         f.write("tree rather than fixed coordinates.\n\n")
         f.write(f"- Scripted walkthrough: **{'ok' if demo_ok else 'failed'}**\n")
         f.write(f"- Instrumented UI tests: **{'pass' if tests_ok else 'fail'}**\n\n")
-
-        f.write("## Expenses in the database afterwards\n\n```\n")
-        f.write(database_rows())
-        f.write("\n```\n\n")
 
         f.write("## Screens\n\n")
         for name, caption in CAPTIONS.items():

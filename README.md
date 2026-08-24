@@ -59,6 +59,17 @@ key.password=…
 Back up that keystore in two places. Losing it means you can never install an
 update over the existing app without uninstalling — which deletes your data.
 
+## Seeing it run
+
+`docs/emulator-run.md` is written by CI on every push: the app is installed
+from the debug APK onto a Pixel 6 emulator (API 34), driven through adb, and
+screenshotted at each step, then the instrumented UI tests run against it.
+The screenshots live in `docs/screenshots/`.
+
+The emulator has no usable speech input, so the mic there only proves the
+recogniser starts and the error paths behave. Voice transcripts feed the same
+`ExpenseParser` as typing, which the unit and UI tests cover.
+
 ## Project layout
 
 | Path | What lives there |
