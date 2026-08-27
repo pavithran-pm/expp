@@ -44,15 +44,14 @@ tree rather than fixed coordinates.
 ## Instrumented test output
 
 ```
-> Task :app:generateDebugAndroidTestAssets UP-TO-DATE
 > Task :app:mergeDebugAndroidTestAssets
 > Task :app:compressDebugAndroidTestAssets FROM-CACHE
 > Task :app:desugarDebugAndroidTestFileDependencies FROM-CACHE
-> Task :app:checkDebugAndroidTestDuplicateClasses
 > Task :app:mergeDebugAndroidTestJniLibFolders
+> Task :app:checkDebugAndroidTestDuplicateClasses
+> Task :app:mergeDebugAndroidTestNativeLibs NO-SOURCE
 > Task :app:mergeExtDexDebugAndroidTest FROM-CACHE
 > Task :app:mergeLibDexDebugAndroidTest FROM-CACHE
-> Task :app:mergeDebugAndroidTestNativeLibs NO-SOURCE
 > Task :app:stripDebugAndroidTestDebugSymbols NO-SOURCE
 > Task :app:validateSigningDebugAndroidTest
 > Task :app:writeDebugAndroidTestSigningConfigVersions
@@ -61,20 +60,20 @@ tree rather than fixed coordinates.
 > Task :app:compileDebugJavaWithJavac NO-SOURCE
 > Task :app:dexBuilderDebug UP-TO-DATE
 > Task :app:mergeDebugGlobalSynthetics UP-TO-DATE
-> Task :app:processDebugJavaRes UP-TO-DATE
 > Task :app:bundleDebugClassesToCompileJar
+> Task :app:processDebugJavaRes UP-TO-DATE
 > Task :app:mergeDebugJavaResource UP-TO-DATE
 > Task :app:mergeProjectDexDebug UP-TO-DATE
 > Task :app:packageDebug UP-TO-DATE
 > Task :app:createDebugApkListingFileRedirect UP-TO-DATE
 > Task :app:kspDebugAndroidTestKotlin
-> Task :app:compileDebugAndroidTestKotlin
+> Task :app:compileDebugAndroidTestKotlin FROM-CACHE
 > Task :app:compileDebugAndroidTestJavaWithJavac NO-SOURCE
 > Task :app:copyRoomSchemas NO-SOURCE
-> Task :app:dexBuilderDebugAndroidTest
+> Task :app:dexBuilderDebugAndroidTest FROM-CACHE
 > Task :app:mergeDebugAndroidTestGlobalSynthetics FROM-CACHE
 > Task :app:processDebugAndroidTestJavaRes
-> Task :app:mergeProjectDexDebugAndroidTest
+> Task :app:mergeProjectDexDebugAndroidTest FROM-CACHE
 > Task :app:mergeDebugAndroidTestJavaResource
 > Task :app:packageDebugAndroidTest
 > Task :app:createDebugAndroidTestApkListingFileRedirect
@@ -83,11 +82,12 @@ tree rather than fixed coordinates.
 > Task :app:connectedDebugAndroidTest
 Starting 4 tests on emulator-5554 - 14
 
-emulator-5554 - 14 Tests 2/4 completed. (0 skipped) (0 failed)
+emulator-5554 - 14 Tests 1/4 completed. (0 skipped) (0 failed)
+emulator-5554 - 14 Tests 4/4 completed. (0 skipped) (0 failed)
 Finished 4 tests on emulator-5554 - 14
-gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__reactivecircus_android-emulator-runner-1787833689943.json
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__reactivecircus_android-emulator-runner-1787834700122.json
 
-BUILD SUCCESSFUL in 38s
-66 actionable tasks: 21 executed, 10 from cache, 35 up-to-date
+BUILD SUCCESSFUL in 42s
+66 actionable tasks: 18 executed, 13 from cache, 35 up-to-date
 ```
 
