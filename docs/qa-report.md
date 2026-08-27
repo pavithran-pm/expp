@@ -29,33 +29,33 @@ Run against the **release** APK (R8-minified) on a Pixel 6 emulator, API 34.
 | App is still responsive after the mic attempt | pass |  |
 | Survives rotation | pass |  |
 | Data survives a force-stop | pass |  |
-| Frame timing recorded while scrolling | pass | 90.48% janky — software rendering on the emulator |
+| Frame timing recorded while scrolling | pass | 92.31% janky — software rendering on the emulator |
 | No crashes in the crash buffer | pass | 0 lines |
 
 ## Performance
 
 | Metric | Value |
 |---|---|
-| Cold start (median of 3) | 1480 ms |
-| Cold start (worst of 3) | 1501 ms |
-| Frames rendered while scrolling | 42 |
-| Janky frames | 38 (90.48%) |
-| 95th percentile frame time | 133 ms |
-| Memory (total PSS) | 28.8 MB |
+| Cold start (median of 3) | 1458 ms |
+| Cold start (worst of 3) | 1627 ms |
+| Frames rendered while scrolling | 39 |
+| Janky frames | 36 (92.31%) |
+| 95th percentile frame time | 150 ms |
+| Memory (total PSS) | 28.9 MB |
 
 ## Load (10,000 expenses)
 
 | Measurement | Value |
 |---|---|
-| `bulk_insert_ms_for_10000` | 23845 |
-| `single_insert_ms_for_50` | 203 |
-| `observe_all_first_emission_ms` | 185 |
+| `bulk_insert_ms_for_10000` | 4578 |
+| `single_insert_ms_for_50` | 107 |
+| `observe_all_first_emission_ms` | 157 |
 | `category_aggregation_ms` | 4 |
 | `month_total_ms` | 1 |
-| `review_count_ms` | 3 |
-| `parse_10000_ms` | 18874 |
-| `parse_micros_each` | 1887.4 |
-| `burst_100_inserts_ms` | 414 |
+| `review_count_ms` | 4 |
+| `parse_10000_ms` | 3117 |
+| `parse_micros_each` | 311.7 |
+| `burst_100_inserts_ms` | 188 |
 
 ## Notes
 
