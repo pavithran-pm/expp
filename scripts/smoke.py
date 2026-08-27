@@ -14,8 +14,8 @@ import time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from uiauto import (  # noqa: E402
-    PKG, back, find, force_stop, in_app, launch, screenshot, scroll_to, sh, swipe, tap,
-    type_text, wait_for
+    PKG, back, ensure_app, find, force_stop, in_app, launch, screen_size, screenshot,
+    scroll_to, sh, swipe, tap, type_text, wait_for
 )
 
 RESULTS = []
@@ -145,19 +145,31 @@ def main():
     tap("Log", timeout=10)
     row = scroll_to("Swiggy")
     if row:
-        swipe(row[0] + 300, row[1], 80, row[1], 300)
-        check("Swipe deletes with an Undo", wait_for("Deleted", exact=False, timeout=10) is not None)
+        # Swipe the full width of the row: anchoring to the text node alone
+        # covers less than the dismiss threshold.
+        width, _ = screen_size()
+        deleted = None
+        for duration in (200, 400):
+            swipe(width - 60, row[1], 60, row[1], duration)
+            deleted = wait_for("Deleted", exact=False, timeout=6)
+            if deleted:
+                break
+        check("Swipe deletes with an Undo", deleted is not None)
         check("Undo restores the row", tap("Undo", timeout=8) and
-              wait_for("Swiggy", exact=False, timeout=10) is not None)
+              scroll_to("Swiggy") is not None)
     else:
         check("Swipe deletes with an Undo", False, "row not found")
 
     menu_open = tap("More", timeout=10) and wait_for("Export to CSV", exact=False, timeout=8)
     check("Overflow menu offers export and import", menu_open is not None)
     if menu_open:
-        back()  # closes the menu, not the app
+        # Dismiss by tapping the title: a back press exits the app outright if
+        # the menu has already closed itself.
+        tap("Paisa", timeout=5)
+    check("Still in the app after the menu", ensure_app())
 
     # Voice: the emulator has no speech input, so this checks the failure path.
+    ensure_app()
     sh("adb logcat -c")
     check("Mic tap does not crash the app", tap("Log by voice", timeout=10))
     time.sleep(8)
@@ -172,6 +184,7 @@ def main():
           wait_for("SPENT TODAY", exact=False, timeout=25) is not None)
 
     # Rotation and process death.
+    ensure_app()
     sh("adb shell settings put system accelerometer_rotation 0")
     sh("adb shell settings put system user_rotation 1")
     time.sleep(3)

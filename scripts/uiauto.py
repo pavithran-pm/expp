@@ -80,6 +80,20 @@ def scroll_to(text, exact=False, attempts=6):
     return None
 
 
+def screen_size():
+    out = sh("adb shell wm size").stdout
+    match = re.search(r"(\d+)x(\d+)", out)
+    return (int(match.group(1)), int(match.group(2))) if match else (1080, 2400)
+
+
+def ensure_app():
+    """Bring the app back if something (a system screen, a stray back) left it."""
+    if in_app():
+        return True
+    launch()
+    return in_app()
+
+
 def in_app():
     out = sh("adb shell dumpsys window | grep -E 'mCurrentFocus|mFocusedApp'").stdout
     return PKG in out
