@@ -38,6 +38,8 @@ def status(key):
 def main():
     tests_ok = status("tests_exit") == "0"
     demo_ok = status("demo_exit") == "0"
+    smoke_ok = status("smoke_exit") == "0"
+    release_ok = status("release_install_exit") == "0"
     print("status file:\n" + read("/tmp/status"))
 
     with open(REPORT, "w") as f:
@@ -46,7 +48,11 @@ def main():
         f.write("APK and driven through adb; taps resolve through the accessibility\n")
         f.write("tree rather than fixed coordinates.\n\n")
         f.write(f"- Scripted walkthrough: **{'ok' if demo_ok else 'failed'}**\n")
-        f.write(f"- Instrumented UI tests: **{'pass' if tests_ok else 'fail'}**\n\n")
+        f.write(f"- Instrumented UI, load and performance tests: "
+                f"**{'pass' if tests_ok else 'fail'}**\n")
+        f.write(f"- Release APK installs: **{'yes' if release_ok else 'no'}**\n")
+        f.write(f"- Smoke pass on the release build: "
+                f"**{'pass' if smoke_ok else 'fail'}** (see docs/qa-report.md)\n\n")
 
         f.write("## Screens\n\n")
         for name, caption in CAPTIONS.items():
@@ -57,11 +63,19 @@ def main():
         f.write(read("docs/voice-log.txt", tail=40))
         f.write("\n```\n\n")
 
+        f.write("## Load and performance measurements\n\n```\n")
+        f.write(read("/tmp/perf.txt", tail=20))
+        f.write("\n```\n\n")
+
+        f.write("## Smoke output\n\n```\n")
+        f.write(read("/tmp/smoke.log", tail=45))
+        f.write("\n```\n\n")
+
         f.write("## Instrumented test output\n\n```\n")
         f.write(read("/tmp/androidtest.log", tail=45))
         f.write("\n```\n\n")
 
-        if not (demo_ok and tests_ok):
+        if not (demo_ok and tests_ok and smoke_ok):
             f.write("## Walkthrough output\n\n```\n")
             f.write(read("/tmp/demo.log", tail=40))
             f.write("\n```\n")

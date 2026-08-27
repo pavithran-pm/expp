@@ -147,7 +147,9 @@ jobs:
       - name: Fail if the emulator run failed
         if: always()
         run: |
-          grep -q "tests_exit=0" /tmp/status && grep -q "demo_exit=0" /tmp/status
+          grep -q "tests_exit=0" /tmp/status \
+            && grep -q "demo_exit=0" /tmp/status \
+            && grep -q "smoke_exit=0" /tmp/status
 
       - name: Upload full-size screenshots
         if: always()
