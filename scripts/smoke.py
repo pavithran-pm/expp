@@ -86,6 +86,12 @@ def crashes_since_start():
 
 def main():
     os.makedirs("docs/qa", exist_ok=True)
+
+    installed = PKG in sh(f"adb shell pm list packages {PKG}").stdout
+    if not check("The build under test is installed", installed):
+        write_report()
+        return 1
+
     sh("adb logcat -c -b crash")
     sh(f"adb shell pm clear {PKG}")
     sh(f"adb shell pm grant {PKG} android.permission.RECORD_AUDIO")

@@ -118,8 +118,9 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Build debug APK
-        run: ./gradlew assembleDebug
+      - name: Build both APKs
+        # The smoke pass runs against the release build, so it has to exist here.
+        run: ./gradlew assembleDebug assembleRelease
 
       - name: Enable KVM
         run: |

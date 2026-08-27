@@ -23,6 +23,7 @@ adb logcat -d -s PaisaPerf:I > /tmp/perf.txt 2>/dev/null
 adb uninstall com.pavithran.paisa
 adb install -r app/build/outputs/apk/release/app-release.apk
 echo "release_install_exit=$?" >> /tmp/status
+adb shell pm list packages com.pavithran.paisa
 
 python3 scripts/smoke.py > /tmp/smoke.log 2>&1
 echo "smoke_exit=$?" >> /tmp/status
