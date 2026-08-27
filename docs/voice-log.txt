@@ -1,5 +1,5 @@
 --------- beginning of main
-08-27 14:49:08.586  2707  2707 W PaisaVoice: error 12 on ON_DEVICE (attempt 1)
-08-27 14:49:08.587  2707  2707 D PaisaVoice: ready for speech on ON_DEVICE
-08-27 14:49:08.923  2707  2707 D PaisaVoice: ready for speech on SYSTEM_SERVICE
-08-27 14:49:14.048  2707  2707 W PaisaVoice: error 7 on SYSTEM_SERVICE (attempt 2)
+08-27 15:18:34.015  3324  3324 D PaisaVoice: ready for speech on ON_DEVICE
+08-27 15:18:34.200  3324  3324 W PaisaVoice: error 12 on ON_DEVICE (attempt 1)
+08-27 15:18:34.763  3324  3324 D PaisaVoice: ready for speech on SYSTEM_SERVICE
+08-27 15:18:35.961  3324  3324 D PaisaVoice: beginning of speech

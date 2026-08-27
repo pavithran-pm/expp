@@ -2,7 +2,7 @@
 
 Run against the **release** APK (R8-minified) on a Pixel 6 emulator, API 34.
 
-**Smoke: 20/23 checks passed.**
+**Smoke: 20/22 checks passed.**
 
 ## Smoke tests
 
@@ -21,11 +21,10 @@ Run against the **release** APK (R8-minified) on a Pixel 6 emulator, API 34.
 | Edit sheet opens on a flagged entry | pass |  |
 | Edit sheet saves | pass |  |
 | Still in the app after editing | pass |  |
-| Swipe deletes with an Undo | **FAIL** |  |
-| Undo restores the row | **FAIL** |  |
+| Log tab still lists the expenses | pass |  |
 | Overflow menu offers export and import | pass |  |
 | Still in the app after the menu | pass |  |
-| Mic tap does not crash the app | pass |  |
+| Mic tap does not crash the app | **FAIL** |  |
 | App is still responsive after the mic attempt | **FAIL** |  |
 | Survives rotation | pass |  |
 | Data survives a force-stop | pass |  |
@@ -36,26 +35,26 @@ Run against the **release** APK (R8-minified) on a Pixel 6 emulator, API 34.
 
 | Metric | Value |
 |---|---|
-| Cold start (median of 3) | 1422 ms |
-| Cold start (worst of 3) | 1602 ms |
-| Frames rendered while scrolling | 39 |
-| Janky frames | 39 (100.00%) |
-| 95th percentile frame time | 150 ms |
-| Memory (total PSS) | 28.9 MB |
+| Cold start (median of 3) | 1427 ms |
+| Cold start (worst of 3) | 1510 ms |
+| Frames rendered while scrolling | 42 |
+| Janky frames | 42 (100.00%) |
+| 95th percentile frame time | 133 ms |
+| Memory (total PSS) | 28.7 MB |
 
 ## Load (10,000 expenses)
 
 | Measurement | Value |
 |---|---|
-| `bulk_insert_ms_for_10000` | 21675 |
-| `single_insert_ms_for_50` | 204 |
-| `observe_all_first_emission_ms` | 160 |
+| `bulk_insert_ms_for_10000` | 21803 |
+| `single_insert_ms_for_50` | 184 |
+| `observe_all_first_emission_ms` | 165 |
 | `category_aggregation_ms` | 4 |
 | `month_total_ms` | 1 |
 | `review_count_ms` | 3 |
-| `parse_10000_ms` | 17385 |
-| `parse_micros_each` | 1738.5 |
-| `burst_100_inserts_ms` | 375 |
+| `parse_10000_ms` | 16264 |
+| `parse_micros_each` | 1626.4 |
+| `burst_100_inserts_ms` | 352 |
 
 ## Notes
 
