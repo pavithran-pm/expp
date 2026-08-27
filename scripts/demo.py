@@ -145,6 +145,10 @@ def main():
     time.sleep(8)
     shot("08-voice", "Mic tapped — recogniser state and fallback")
 
+    # Dismiss the system speech dialog if the fallback chain opened it.
+    sh("adb shell input keyevent 4")
+    time.sleep(1)
+
     voice_log = sh("adb logcat -d -s PaisaVoice:V").stdout.strip()
     with open("docs/voice-log.txt", "w") as f:
         f.write(voice_log or "(no PaisaVoice lines)")

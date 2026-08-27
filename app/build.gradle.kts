@@ -15,7 +15,14 @@ val keystoreProps = Properties().apply {
     val f = rootProject.file("local.properties")
     if (f.exists()) f.inputStream().use { load(it) }
 }
-val hasReleaseKeystore = keystoreProps.getProperty("keystore.path")?.let { file(it).exists() } == true
+
+// CI passes the keystore through the environment; a developer machine uses
+// local.properties. Neither ever lives in the repository.
+fun signingValue(env: String, property: String): String? =
+    System.getenv(env) ?: keystoreProps.getProperty(property)
+
+val keystorePath = signingValue("PAISA_KEYSTORE_PATH", "keystore.path")
+val hasReleaseKeystore = keystorePath?.let { file(it).exists() } == true
 
 android {
     namespace = "com.pavithran.paisa"
@@ -25,7 +32,7 @@ android {
         applicationId = "com.pavithran.paisa"
         minSdk = 26
         targetSdk = 35
-        versionCode = 10
+        versionCode = 11
         versionName = "1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -33,10 +40,13 @@ android {
     signingConfigs {
         if (hasReleaseKeystore) {
             create("release") {
-                storeFile = file(keystoreProps.getProperty("keystore.path"))
-                storePassword = keystoreProps.getProperty("keystore.password")
-                keyAlias = keystoreProps.getProperty("key.alias")
-                keyPassword = keystoreProps.getProperty("key.password")
+                storeFile = file(keystorePath!!)
+                storePassword = signingValue("PAISA_KEYSTORE_PASSWORD", "keystore.password")
+                keyAlias = signingValue("PAISA_KEY_ALIAS", "key.alias")
+                keyPassword = signingValue("PAISA_KEY_PASSWORD", "key.password")
+                enableV1Signing = true
+                enableV2Signing = true
+                enableV3Signing = true
             }
         }
     }
@@ -44,6 +54,7 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = true
+            isDebuggable = false
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             // Falls back to the debug key when no release keystore is configured,

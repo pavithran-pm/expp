@@ -151,12 +151,15 @@ def main():
     sh("adb logcat -c")
     check("Mic tap does not crash the app", tap("Log by voice", timeout=10))
     time.sleep(8)
+    screenshot("docs/screenshots/smoke-04-voice.png")
     voice_log = sh("adb logcat -d -s PaisaVoice:V").stdout.strip()
+    # A fallback may have opened the system's speech dialog over the app.
+    back()
+    time.sleep(1)
     with open("docs/qa/voice-log.txt", "w") as f:
         f.write(voice_log or "(no PaisaVoice lines)")
     check("App is still responsive after the mic attempt",
-          wait_for("SPENT TODAY", exact=False, timeout=20) is not None)
-    screenshot("docs/screenshots/smoke-04-voice.png")
+          wait_for("SPENT TODAY", exact=False, timeout=25) is not None)
 
     # Rotation and process death.
     sh("adb shell settings put system accelerometer_rotation 0")
