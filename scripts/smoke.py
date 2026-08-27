@@ -147,10 +147,15 @@ def main():
 
     menu_open = tap("More", timeout=10) and wait_for("Export to CSV", exact=False, timeout=8)
     check("Overflow menu offers export and import", menu_open is not None)
-    if menu_open:
-        # Dismiss by tapping the title: a back press exits the app outright if
-        # the menu has already closed itself.
-        tap("Paisa", timeout=5)
+    def close_menu():
+        for _ in range(3):
+            if not find("Export to CSV", exact=False):
+                return True
+            back()
+            time.sleep(1)
+        return not find("Export to CSV", exact=False)
+
+    check("Overflow menu closes again", close_menu())
     check("Still in the app after the menu", ensure_app())
 
     # Voice: the emulator has no speech input, so this checks the failure path.
