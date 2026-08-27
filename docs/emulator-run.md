@@ -7,7 +7,7 @@ tree rather than fixed coordinates.
 - Scripted walkthrough: **ok**
 - Instrumented UI, load and performance tests: **pass**
 - Release APK installs: **yes**
-- Smoke pass on the release build: **fail** (see docs/qa-report.md)
+- Smoke pass on the release build: **pass** (see docs/qa-report.md)
 
 ## Screens
 
@@ -55,25 +55,24 @@ tree rather than fixed coordinates.
 
 ```
 --------- beginning of main
-08-27 15:18:34.015  3324  3324 D PaisaVoice: ready for speech on ON_DEVICE
-08-27 15:18:34.200  3324  3324 W PaisaVoice: error 12 on ON_DEVICE (attempt 1)
-08-27 15:18:34.763  3324  3324 D PaisaVoice: ready for speech on SYSTEM_SERVICE
-08-27 15:18:35.961  3324  3324 D PaisaVoice: beginning of speech
+08-27 15:47:58.808  2947  2947 W PaisaVoice: error 12 on ON_DEVICE (attempt 1)
+08-27 15:47:59.308  2947  2947 D PaisaVoice: ready for speech on SYSTEM_SERVICE
+08-27 15:48:04.369  2947  2947 W PaisaVoice: error 7 on SYSTEM_SERVICE (attempt 2)
 ```
 
 ## Load and performance measurements
 
 ```
 --------- beginning of main
-08-27 15:19:51.267  7105  7126 I PaisaPerf: bulk_insert_ms_for_10000=21803
-08-27 15:19:51.451  7105  7126 I PaisaPerf: single_insert_ms_for_50=184
-08-27 15:19:51.616  7105  7126 I PaisaPerf: observe_all_first_emission_ms=165
-08-27 15:19:51.620  7105  7126 I PaisaPerf: category_aggregation_ms=4
-08-27 15:19:51.621  7105  7126 I PaisaPerf: month_total_ms=1
-08-27 15:19:51.624  7105  7126 I PaisaPerf: review_count_ms=3
-08-27 15:20:07.894  7105  7126 I PaisaPerf: parse_10000_ms=16264
-08-27 15:20:07.894  7105  7126 I PaisaPerf: parse_micros_each=1626.4
-08-27 15:20:11.534  7105  7126 I PaisaPerf: burst_100_inserts_ms=352
+08-27 15:49:06.970  7062  7082 I PaisaPerf: bulk_insert_ms_for_10000=23845
+08-27 15:49:07.173  7062  7082 I PaisaPerf: single_insert_ms_for_50=203
+08-27 15:49:07.359  7062  7082 I PaisaPerf: observe_all_first_emission_ms=185
+08-27 15:49:07.363  7062  7082 I PaisaPerf: category_aggregation_ms=4
+08-27 15:49:07.367  7062  7082 I PaisaPerf: month_total_ms=1
+08-27 15:49:07.371  7062  7082 I PaisaPerf: review_count_ms=3
+08-27 15:49:26.252  7062  7082 I PaisaPerf: parse_10000_ms=18874
+08-27 15:49:26.252  7062  7082 I PaisaPerf: parse_micros_each=1887.4
+08-27 15:49:30.383  7062  7082 I PaisaPerf: burst_100_inserts_ms=414
 ```
 
 ## Smoke output
@@ -94,18 +93,23 @@ tree rather than fixed coordinates.
 [PASS] Still in the app after editing 
 [PASS] Log tab still lists the expenses 
 [PASS] Overflow menu offers export and import 
+[PASS] Overflow menu closes again 
 [PASS] Still in the app after the menu 
-[FAIL] Mic tap does not crash the app 
-[FAIL] App is still responsive after the mic attempt 
+[PASS] Mic tap does not crash the app 
+[PASS] App is still responsive after the mic attempt 
 [PASS] Survives rotation 
 [PASS] Data survives a force-stop 
-[PASS] Frame timing recorded while scrolling 100.0% janky — software rendering on the emulator
+[PASS] Frame timing recorded while scrolling 90.48% janky — software rendering on the emulator
 [PASS] No crashes in the crash buffer 0 lines
 ```
 
 ## Instrumented test output
 
 ```
+> Task :app:stripDebugDebugSymbols UP-TO-DATE
+> Task :app:validateSigningDebug UP-TO-DATE
+> Task :app:writeDebugAppMetadata UP-TO-DATE
+> Task :app:writeDebugSigningConfigVersions UP-TO-DATE
 > Task :app:packageDebug UP-TO-DATE
 > Task :app:createDebugApkListingFileRedirect UP-TO-DATE
 > Task :app:mergeDebugAndroidTestShaders
@@ -115,23 +119,19 @@ tree rather than fixed coordinates.
 > Task :app:mergeDebugAndroidTestAssets
 > Task :app:compressDebugAndroidTestAssets FROM-CACHE
 > Task :app:desugarDebugAndroidTestFileDependencies FROM-CACHE
+> Task :app:dexBuilderDebugAndroidTest FROM-CACHE
+> Task :app:mergeDebugAndroidTestGlobalSynthetics FROM-CACHE
+> Task :app:processDebugAndroidTestJavaRes
 > Task :app:checkDebugAndroidTestDuplicateClasses
 > Task :app:mergeDebugAndroidTestJniLibFolders
 > Task :app:mergeExtDexDebugAndroidTest FROM-CACHE
 > Task :app:mergeLibDexDebugAndroidTest FROM-CACHE
+> Task :app:mergeProjectDexDebugAndroidTest FROM-CACHE
 > Task :app:mergeDebugAndroidTestNativeLibs NO-SOURCE
 > Task :app:stripDebugAndroidTestDebugSymbols NO-SOURCE
 > Task :app:validateSigningDebugAndroidTest
 > Task :app:writeDebugAndroidTestSigningConfigVersions
-> Task :app:kspDebugAndroidTestKotlin
-> Task :app:compileDebugAndroidTestKotlin
-> Task :app:compileDebugAndroidTestJavaWithJavac NO-SOURCE
-> Task :app:copyRoomSchemas
-> Task :app:dexBuilderDebugAndroidTest
-> Task :app:mergeDebugAndroidTestGlobalSynthetics FROM-CACHE
-> Task :app:processDebugAndroidTestJavaRes
 > Task :app:mergeDebugAndroidTestJavaResource
-> Task :app:mergeProjectDexDebugAndroidTest
 > Task :app:packageDebugAndroidTest
 > Task :app:createDebugAndroidTestApkListingFileRedirect
 [EmulatorConsole]: Failed to start Emulator console for 5554
@@ -141,36 +141,15 @@ Starting 10 tests on emulator-5554 - 14
 
 emulator-5554 - 14 Tests 0/10 completed. (0 skipped) (0 failed)
 emulator-5554 - 14 Tests 1/10 completed. (0 skipped) (0 failed)
-emulator-5554 - 14 Tests 2/10 completed. (0 skipped) (0 failed)
-emulator-5554 - 14 Tests 4/10 completed. (0 skipped) (0 failed)
+emulator-5554 - 14 Tests 3/10 completed. (0 skipped) (0 failed)
+emulator-5554 - 14 Tests 5/10 completed. (0 skipped) (0 failed)
 emulator-5554 - 14 Tests 7/10 completed. (0 skipped) (0 failed)
 emulator-5554 - 14 Tests 8/10 completed. (0 skipped) (0 failed)
-emulator-5554 - 14 Tests 9/10 completed. (0 skipped) (0 failed)
+emulator-5554 - 14 Tests 10/10 completed. (0 skipped) (0 failed)
 Finished 10 tests on emulator-5554 - 14
-gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__reactivecircus_android-emulator-runner-1787843943897.json
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__reactivecircus_android-emulator-runner-1787845708845.json
 
-BUILD SUCCESSFUL in 1m 51s
-67 actionable tasks: 21 executed, 11 from cache, 35 up-to-date
+BUILD SUCCESSFUL in 1m 47s
+67 actionable tasks: 17 executed, 15 from cache, 35 up-to-date
 ```
 
-## Walkthrough output
-
-```
-[shot] 01-empty: 53466 bytes — Fresh install: empty state, mic button, text entry
-[shot] 02-first-expense: 311293 bytes — Typed a sentence: parsed to ₹250 · Food · Saravana Bhavan
-[shot] 03-log-list: 372702 bytes — A day of expenses, with the unparsed entry flagged amber
-[shot] 04-summary: 356489 bytes — Monthly total, category bars, daily average
-[shot] 05-review: 108332 bytes — Review queue: entries the parser was unsure about
-[shot] 06-edit: 130768 bytes — Edit sheet: original sentence kept, amount and category fixable
-[shot] 07-final: 351016 bytes — Back on the log, review badge cleared where fixed
-[shot] 08-voice: 343643 bytes — Mic tapped — recogniser state and fallback
-=== PaisaVoice log ===
---------- beginning of main
-08-27 15:18:34.015  3324  3324 D PaisaVoice: ready for speech on ON_DEVICE
-08-27 15:18:34.200  3324  3324 W PaisaVoice: error 12 on ON_DEVICE (attempt 1)
-08-27 15:18:34.763  3324  3324 D PaisaVoice: ready for speech on SYSTEM_SERVICE
-08-27 15:18:35.961  3324  3324 D PaisaVoice: beginning of speech
-[shot] 09-voice-permission: 253235 bytes — Mic without permission — the system prompt appears
-[shot] 10-voice-denied: 362627 bytes — Permission denied — the app says why the mic is needed
-walkthrough complete
-```

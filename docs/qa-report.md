@@ -2,7 +2,7 @@
 
 Run against the **release** APK (R8-minified) on a Pixel 6 emulator, API 34.
 
-**Smoke: 20/22 checks passed.**
+**Smoke: 23/23 checks passed.**
 
 ## Smoke tests
 
@@ -23,38 +23,39 @@ Run against the **release** APK (R8-minified) on a Pixel 6 emulator, API 34.
 | Still in the app after editing | pass |  |
 | Log tab still lists the expenses | pass |  |
 | Overflow menu offers export and import | pass |  |
+| Overflow menu closes again | pass |  |
 | Still in the app after the menu | pass |  |
-| Mic tap does not crash the app | **FAIL** |  |
-| App is still responsive after the mic attempt | **FAIL** |  |
+| Mic tap does not crash the app | pass |  |
+| App is still responsive after the mic attempt | pass |  |
 | Survives rotation | pass |  |
 | Data survives a force-stop | pass |  |
-| Frame timing recorded while scrolling | pass | 100.0% janky — software rendering on the emulator |
+| Frame timing recorded while scrolling | pass | 90.48% janky — software rendering on the emulator |
 | No crashes in the crash buffer | pass | 0 lines |
 
 ## Performance
 
 | Metric | Value |
 |---|---|
-| Cold start (median of 3) | 1427 ms |
-| Cold start (worst of 3) | 1510 ms |
+| Cold start (median of 3) | 1480 ms |
+| Cold start (worst of 3) | 1501 ms |
 | Frames rendered while scrolling | 42 |
-| Janky frames | 42 (100.00%) |
+| Janky frames | 38 (90.48%) |
 | 95th percentile frame time | 133 ms |
-| Memory (total PSS) | 28.7 MB |
+| Memory (total PSS) | 28.8 MB |
 
 ## Load (10,000 expenses)
 
 | Measurement | Value |
 |---|---|
-| `bulk_insert_ms_for_10000` | 21803 |
-| `single_insert_ms_for_50` | 184 |
-| `observe_all_first_emission_ms` | 165 |
+| `bulk_insert_ms_for_10000` | 23845 |
+| `single_insert_ms_for_50` | 203 |
+| `observe_all_first_emission_ms` | 185 |
 | `category_aggregation_ms` | 4 |
 | `month_total_ms` | 1 |
 | `review_count_ms` | 3 |
-| `parse_10000_ms` | 16264 |
-| `parse_micros_each` | 1626.4 |
-| `burst_100_inserts_ms` | 352 |
+| `parse_10000_ms` | 18874 |
+| `parse_micros_each` | 1887.4 |
+| `burst_100_inserts_ms` | 414 |
 
 ## Notes
 
