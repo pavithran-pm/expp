@@ -25,9 +25,6 @@ import android.app.Activity
 import androidx.core.app.ActivityCompat
 import com.pavithran.paisa.voice.VoiceRecognizer
 import androidx.compose.material3.Badge
-import android.app.Activity
-import androidx.core.app.ActivityCompat
-import com.pavithran.paisa.voice.VoiceRecognizer
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
