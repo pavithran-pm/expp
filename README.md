@@ -59,6 +59,20 @@ key.password=…
 Back up that keystore in two places. Losing it means you can never install an
 update over the existing app without uninstalling — which deletes your data.
 
+## Quality gates
+
+Every push runs, in order:
+
+| Gate | What it covers |
+|---|---|
+| Unit tests | 63 tests: the parser, CSV round-trips, and the voice recovery matrix |
+| Instrumented tests | 10 tests on an emulator, including swipe-to-delete and a 10,000-expense load test |
+| Smoke pass | 23 checks against the **release** APK, the build that ships |
+| Performance | Cold start, memory, frame timing, and query times under load |
+
+Results land in `docs/qa-report.md`; the voice scenarios are listed in
+`docs/voice-test-plan.md`.
+
 ## Seeing it run
 
 `docs/emulator-run.md` is written by CI on every push: the app is installed

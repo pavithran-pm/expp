@@ -138,7 +138,9 @@ class LoadAndPerformanceTest {
         report("parse_${iterations}_ms", elapsed)
         val perParseMicros = elapsed * 1000.0 / iterations
         report("parse_micros_each", "%.1f".format(perParseMicros))
-        assertTrue("parsing averaged ${perParseMicros}µs", perParseMicros < 2_000)
+        // Keyword matching is a map lookup per word, not a regex per keyword,
+        // which took roughly 1.9ms per sentence before.
+        assertTrue("parsing averaged ${perParseMicros}µs", perParseMicros < 800)
     }
 
     private companion object {

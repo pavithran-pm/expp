@@ -83,6 +83,44 @@ object ExpenseParser {
         "bought", "buy", "cost", "costs", "worth", "only", "about", "around"
     )
 
+    // Compiled once. Building these per call meant recompiling roughly a
+    // hundred regexes for every sentence parsed.
+    private val whitespace = Regex("\\s+")
+    private val thousandsComma = Regex("(?<=\\d),(?=\\d)")
+    private val punctuation = Regex("[^a-z0-9. ]")
+    private val letterThenDigit = Regex("(?<=[a-z])(?=\\d)")
+    private val digitThenLetter = Regex("(?<=\\d)(?=[a-z])")
+    private val digitAmount = Regex(
+        "(?<![a-z0-9.])(\\d+(?:\\.\\d+)?)\\s*" +
+            "(k|thousand|thousands|lakh|lakhs|lac|hundred|hundreds)?(?![a-z0-9])"
+    )
+    /**
+     * Most keywords are single words, so they resolve with a map lookup per
+     * word in the sentence instead of a regex search per keyword. The first
+     * category in [categoryKeywords] wins a word claimed by two categories,
+     * which is the order the previous scan produced.
+     */
+    private val singleWordIndex: Map<String, CategoryMatch> = buildMap {
+        categoryKeywords.forEach { (category, keywords) ->
+            keywords.filterNot { it.contains(' ') }.forEach { keyword ->
+                putIfAbsent(keyword, CategoryMatch(category, keyword))
+            }
+        }
+    }
+
+    /** The few keywords that span words still need a boundary-aware search. */
+    private val multiWordPatterns: List<Pair<CategoryMatch, Regex>> =
+        categoryKeywords.flatMap { (category, keywords) ->
+            keywords.filter { it.contains(' ') }.map { keyword ->
+                CategoryMatch(category, keyword) to Regex("\\b${Regex.escape(keyword)}\\b")
+            }
+        }
+
+    private val keywordPatternsByCategory: Map<String, List<Pair<String, Regex>>> =
+        categoryKeywords.mapValues { (_, keywords) ->
+            keywords.filter { it.contains(' ') }.map { it to Regex("\\b${Regex.escape(it)}\\b") }
+        }
+
     private val units = mapOf(
         "zero" to 0, "one" to 1, "two" to 2, "three" to 3, "four" to 4, "five" to 5,
         "six" to 6, "seven" to 7, "eight" to 8, "nine" to 9, "ten" to 10,
@@ -123,7 +161,7 @@ object ExpenseParser {
         // Remove the amount from the string first, so "2k rent" never treats
         // "2k" as a merchant name.
         val withoutAmount = amountMatch?.let {
-            normalised.removeRange(it.range).replace(Regex("\\s+"), " ").trim()
+            normalised.removeRange(it.range).replace(whitespace, " ").trim()
         } ?: normalised
 
         val categoryMatch = matchCategory(withoutAmount)
@@ -149,12 +187,12 @@ object ExpenseParser {
             text = text.replace(wrong, right)
         }
         // "1,200" -> "1200"; keep decimals intact.
-        text = text.replace(Regex("(?<=\\d),(?=\\d)"), "")
-        text = text.replace(Regex("[^a-z0-9. ]"), " ")
+        text = text.replace(thousandsComma, "")
+        text = text.replace(punctuation, " ")
         // "rs250" -> "rs 250", "2k" -> "2 k": speech-to-text glues these together.
-        text = text.replace(Regex("(?<=[a-z])(?=\\d)"), " ")
-        text = text.replace(Regex("(?<=\\d)(?=[a-z])"), " ")
-        return text.replace(Regex("\\s+"), " ").trim()
+        text = text.replace(letterThenDigit, " ")
+        text = text.replace(digitThenLetter, " ")
+        return text.replace(whitespace, " ").trim()
     }
 
     private data class AmountMatch(val value: Double, val range: IntRange)
@@ -166,8 +204,7 @@ object ExpenseParser {
 
     /** 250, 99.50, 1.2k, 2k, "1200 rupees", "3 thousand". */
     private fun extractDigitAmount(text: String): AmountMatch? {
-        val regex = Regex("(?<![a-z0-9.])(\\d+(?:\\.\\d+)?)\\s*(k|thousand|thousands|lakh|lakhs|lac|hundred|hundreds)?(?![a-z0-9])")
-        val match = regex.find(text) ?: return null
+        val match = digitAmount.find(text) ?: return null
         val base = match.groupValues[1].toDoubleOrNull() ?: return null
         val multiplier = match.groupValues[2].takeIf { it.isNotEmpty() }?.let { scales[it] } ?: 1
         return AmountMatch(base * multiplier, match.range)
@@ -259,17 +296,26 @@ object ExpenseParser {
         return if (value == 0) null else value
     }
 
-    /** Matches on word boundaries so "auto" never fires inside "automobile". */
+    /** Matches whole words only, so "auto" never fires inside "automobile". */
     private fun matchCategory(text: String): CategoryMatch? {
         var best: CategoryMatch? = null
         var bestIndex = Int.MAX_VALUE
-        categoryKeywords.forEach { (category, keywords) ->
-            keywords.forEach { keyword ->
-                val index = Regex("\\b${Regex.escape(keyword)}\\b").find(text)?.range?.first
-                if (index != null && index < bestIndex) {
-                    bestIndex = index
-                    best = CategoryMatch(category, keyword)
-                }
+
+        var position = 0
+        text.split(' ').forEach { word ->
+            val hit = singleWordIndex[word]
+            if (hit != null && position < bestIndex) {
+                bestIndex = position
+                best = hit
+            }
+            position += word.length + 1
+        }
+
+        multiWordPatterns.forEach { (hit, pattern) ->
+            val index = pattern.find(text)?.range?.first
+            if (index != null && index < bestIndex) {
+                bestIndex = index
+                best = hit
             }
         }
         return best
@@ -279,14 +325,16 @@ object ExpenseParser {
         var remaining = text
         // Strip every keyword of the matched category, not just the first one,
         // so "movie ticket 400" does not leave "Ticket" behind as a merchant.
-        categoryKeywords[matchedCategory].orEmpty()
-            .filterNot { it in brandKeywords }
-            .forEach { keyword ->
-                remaining = remaining.replace(Regex("\\b${Regex.escape(keyword)}\\b"), " ")
-            }
+        keywordPatternsByCategory[matchedCategory].orEmpty()
+            .filterNot { (keyword, _) -> keyword in brandKeywords }
+            .forEach { (_, pattern) -> remaining = remaining.replace(pattern, " ") }
+        val singleWordKeywords = categoryKeywords[matchedCategory].orEmpty()
+            .filterNot { it.contains(' ') || it in brandKeywords }
+            .toSet()
         val words = remaining.split(" ")
             .map { it.trim() }
             .filter { it.isNotEmpty() }
+            .filterNot { it in singleWordKeywords }
             .filterNot { it in fillerWords }
             .filterNot { it in currencyNoise }
             .filterNot { isNumberWord(it) }
