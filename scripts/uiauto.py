@@ -67,6 +67,24 @@ def tap(text, exact=True, timeout=20):
     return True
 
 
+def scroll_to(text, exact=False, attempts=6):
+    """Find text, scrolling the list up until it appears."""
+    point = find(text, exact)
+    if point:
+        return point
+    for _ in range(attempts):
+        swipe(540, 1700, 540, 900, 250)
+        point = find(text, exact)
+        if point:
+            return point
+    return None
+
+
+def in_app():
+    out = sh("adb shell dumpsys window | grep -E 'mCurrentFocus|mFocusedApp'").stdout
+    return PKG in out
+
+
 def tap_at(x, y):
     sh(f"adb shell input tap {x} {y}")
     time.sleep(1.0)
