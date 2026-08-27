@@ -2,50 +2,57 @@
 
 Run against the **release** APK (R8-minified) on a Pixel 6 emulator, API 34.
 
-**Smoke: 1/19 checks passed.**
+**Smoke: 13/20 checks passed.**
 
 ## Smoke tests
 
 | Check | Result | Detail |
 |---|---|---|
-| App launches to the log screen | **FAIL** |  |
-| Typed expense is parsed and saved | **FAIL** |  |
-| Amount is formatted in Indian rupees | **FAIL** |  |
-| Quick chip fills the field | **FAIL** |  |
-| Unparseable input is still saved | **FAIL** |  |
-| Shorthand amount expands | **FAIL** |  |
-| Summary tab opens | **FAIL** |  |
-| Category breakdown is shown | **FAIL** |  |
-| Review tab opens | **FAIL** |  |
-| Edit sheet opens on a flagged entry | **FAIL** |  |
-| Edit sheet saves | **FAIL** |  |
+| The build under test is installed | pass |  |
+| App launches to the log screen | pass |  |
+| Typed expense is parsed and saved | pass |  |
+| Amount is formatted in Indian rupees | pass |  |
+| Quick chip fills the field | pass |  |
+| Unparseable input is still saved | pass |  |
+| Shorthand amount expands | pass |  |
+| Summary tab opens | pass |  |
+| Category breakdown is shown | pass |  |
+| Review tab opens | pass |  |
+| Edit sheet opens on a flagged entry | pass |  |
+| Edit sheet saves | pass |  |
 | Swipe deletes with an Undo | **FAIL** | row not found |
 | Overflow menu offers export and import | **FAIL** |  |
 | Mic tap does not crash the app | **FAIL** |  |
 | App is still responsive after the mic attempt | **FAIL** |  |
 | Survives rotation | **FAIL** |  |
 | Data survives a force-stop | **FAIL** |  |
-| Scrolling stays under 25% janky frames | warn | no data |
+| Scrolling stays under 25% janky frames | warn | 97.62% janky |
 | No crashes in the crash buffer | pass | 0 lines |
 
 ## Performance
 
 | Metric | Value |
 |---|---|
+| Cold start (median of 3) | 1442 ms |
+| Cold start (worst of 3) | 1477 ms |
+| Frames rendered while scrolling | 42 |
+| Janky frames | 41 (97.62%) |
+| 95th percentile frame time | 150 ms |
+| Memory (total PSS) | 29.4 MB |
 
 ## Load (10,000 expenses)
 
 | Measurement | Value |
 |---|---|
-| `bulk_insert_ms_for_10000` | 24949 |
-| `single_insert_ms_for_50` | 193 |
-| `observe_all_first_emission_ms` | 169 |
-| `category_aggregation_ms` | 5 |
-| `month_total_ms` | 2 |
-| `review_count_ms` | 4 |
-| `parse_10000_ms` | 17969 |
-| `parse_micros_each` | 1796.9 |
-| `burst_100_inserts_ms` | 375 |
+| `bulk_insert_ms_for_10000` | 22155 |
+| `single_insert_ms_for_50` | 191 |
+| `observe_all_first_emission_ms` | 165 |
+| `category_aggregation_ms` | 4 |
+| `month_total_ms` | 1 |
+| `review_count_ms` | 3 |
+| `parse_10000_ms` | 17207 |
+| `parse_micros_each` | 1720.7 |
+| `burst_100_inserts_ms` | 369 |
 
 ## Notes
 
