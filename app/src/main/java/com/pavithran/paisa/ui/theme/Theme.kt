@@ -1,46 +1,67 @@
 package com.pavithran.paisa.ui.theme
 
-import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 
-private val Teal = Color(0xFF00695C)
-private val TealLight = Color(0xFF4DB6AC)
-private val Amber = Color(0xFFFFB300)
-
-val ReviewAmber = Amber
+val ReviewAmber = Saffron400
 
 private val LightColors = lightColorScheme(
-    primary = Teal,
-    secondary = TealLight,
-    tertiary = Amber
+    primary = Emerald700,
+    onPrimary = Color.White,
+    primaryContainer = Emerald50,
+    onPrimaryContainer = Emerald900,
+    secondary = Saffron600,
+    onSecondary = Color.White,
+    secondaryContainer = Saffron100,
+    onSecondaryContainer = Color(0xFF5B3B00),
+    tertiary = Emerald500,
+    background = Paper,
+    onBackground = Ink,
+    surface = PaperCard,
+    onSurface = Ink,
+    surfaceVariant = Emerald50,
+    onSurfaceVariant = InkSoft,
+    outline = Color(0xFFC9D6D2),
+    outlineVariant = Color(0xFFE1EAE7),
+    error = Color(0xFFB3261E),
+    errorContainer = Color(0xFFF9DEDC)
 )
 
 private val DarkColors = darkColorScheme(
-    primary = TealLight,
-    secondary = Teal,
-    tertiary = Amber
+    primary = Emerald200,
+    onPrimary = Color(0xFF00382F),
+    primaryContainer = Emerald900,
+    onPrimaryContainer = Emerald50,
+    secondary = Saffron400,
+    onSecondary = Color(0xFF3A2600),
+    secondaryContainer = Color(0xFF553B08),
+    onSecondaryContainer = Saffron100,
+    tertiary = Emerald500,
+    background = NightBase,
+    onBackground = NightInk,
+    surface = NightCard,
+    onSurface = NightInk,
+    surfaceVariant = NightLine,
+    onSurfaceVariant = NightInkSoft,
+    outline = Color(0xFF3A4A46),
+    outlineVariant = NightLine,
+    error = Color(0xFFF2B8B5),
+    errorContainer = Color(0xFF8C1D18)
 )
 
 @Composable
 fun PaisaTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
-    val context = LocalContext.current
-    val colors = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S ->
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        darkTheme -> DarkColors
-        else -> LightColors
-    }
-    MaterialTheme(colorScheme = colors, content = content)
+    // Deliberately not dynamic colour: the palette is part of the app's identity.
+    MaterialTheme(
+        colorScheme = if (darkTheme) DarkColors else LightColors,
+        typography = PaisaTypography,
+        content = content
+    )
 }

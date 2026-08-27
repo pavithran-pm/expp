@@ -40,7 +40,8 @@ class LoggingFlowTest {
     fun typedSentenceIsParsedAndSaved() {
         log("250 lunch at saravana bhavan")
         waitForText("₹250")
-        waitForText("Food · Saravana Bhavan")
+        waitForText("Saravana Bhavan")
+        waitForText("Food")
     }
 
     @Test

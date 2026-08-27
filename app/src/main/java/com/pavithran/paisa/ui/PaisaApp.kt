@@ -26,7 +26,9 @@ import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -39,6 +41,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -78,6 +81,7 @@ fun PaisaApp(
     val reviewItems by viewModel.reviewItems.collectAsStateWithLifecycle()
     val reviewCount by viewModel.reviewCount.collectAsStateWithLifecycle()
     val todayTotal by viewModel.todayTotal.collectAsStateWithLifecycle()
+    val monthTotal by viewModel.monthTotal.collectAsStateWithLifecycle()
     val voiceState by viewModel.voiceState.collectAsStateWithLifecycle()
 
     var pendingVoiceStart by remember { mutableStateOf(false) }
@@ -115,7 +119,15 @@ fun PaisaApp(
         snackbarHost = { SnackbarHost(snackbarHost) },
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.app_name)) },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background
+                ),
+                title = {
+                    Text(
+                        stringResource(R.string.app_name),
+                        style = MaterialTheme.typography.titleLarge
+                    )
+                },
                 actions = {
                     IconButton(onClick = { menuOpen = true }) {
                         Icon(Icons.Default.MoreVert, contentDescription = "More")
@@ -134,7 +146,10 @@ fun PaisaApp(
             )
         },
         bottomBar = {
-            NavigationBar {
+            NavigationBar(
+                containerColor = MaterialTheme.colorScheme.surface,
+                tonalElevation = 0.dp
+            ) {
                 NavigationBarItem(
                     selected = tab == Tab.Log,
                     onClick = { tab = Tab.Log },
@@ -173,7 +188,9 @@ fun PaisaApp(
                 label = "pulse"
             )
             FloatingActionButton(
-                modifier = Modifier.size(72.dp).scale(pulse),
+                shape = CircleShape,
+                elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 8.dp),
+                modifier = Modifier.size(68.dp).scale(pulse),
                 containerColor = if (listening) {
                     MaterialTheme.colorScheme.error
                 } else {
@@ -214,6 +231,7 @@ fun PaisaApp(
                     Tab.Log -> LogScreen(
                         expenses = expenses,
                         todayTotal = todayTotal,
+                        monthTotal = monthTotal,
                         onLog = viewModel::log,
                         onEdit = { editing = it },
                         onDelete = viewModel::delete

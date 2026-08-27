@@ -129,7 +129,7 @@ def main():
     time.sleep(1.5)
     shot("05-review", "Review queue: entries the parser was unsure about")
 
-    tap("Other", exact=False, label="review row")
+    tap("qwerty", exact=False, label="review row")
     time.sleep(1.5)
     shot("06-edit", "Edit sheet: original sentence kept, amount and category fixable")
 
