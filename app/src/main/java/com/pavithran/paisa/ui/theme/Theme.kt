@@ -28,7 +28,12 @@ private val LightColors = lightColorScheme(
     outline = Color(0xFFC9D6D2),
     outlineVariant = Color(0xFFE1EAE7),
     error = Color(0xFFB3261E),
-    errorContainer = Color(0xFFF9DEDC)
+    errorContainer = Color(0xFFF9DEDC),
+    // Snackbars invert the surface; without these the action falls back to
+    // the default purple.
+    inverseSurface = Ink,
+    inverseOnSurface = Paper,
+    inversePrimary = Emerald200
 )
 
 private val DarkColors = darkColorScheme(
@@ -50,7 +55,10 @@ private val DarkColors = darkColorScheme(
     outline = Color(0xFF3A4A46),
     outlineVariant = NightLine,
     error = Color(0xFFF2B8B5),
-    errorContainer = Color(0xFF8C1D18)
+    errorContainer = Color(0xFF8C1D18),
+    inverseSurface = NightInk,
+    inverseOnSurface = NightBase,
+    inversePrimary = Emerald700
 )
 
 @Composable

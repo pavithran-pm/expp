@@ -378,10 +378,12 @@ fun ExpenseCard(expense: Expense, onClick: () -> Unit) {
                 )
                 Spacer(Modifier.height(1.dp))
                 Text(
-                    text = if (expense.needsReview) {
-                        "\u201c${expense.rawText}\u201d"
-                    } else {
-                        "${expense.category} · ${Dates.timeLabel(expense.timestamp)}"
+                    text = when {
+                        expense.needsReview -> "\u201c${expense.rawText}\u201d"
+                        // The headline already shows the category when there is
+                        // no merchant, so don't repeat it here.
+                        expense.merchant == null -> Dates.timeLabel(expense.timestamp)
+                        else -> "${expense.category} · ${Dates.timeLabel(expense.timestamp)}"
                     },
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
