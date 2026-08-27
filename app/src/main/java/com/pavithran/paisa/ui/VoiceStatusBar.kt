@@ -31,6 +31,7 @@ fun VoiceStatusBar(state: VoiceState) {
         VoiceState.Listening -> "Listening…"
         is VoiceState.Hearing -> "\u201c${state.partial}\u201d"
         VoiceState.Processing -> "Saving…"
+        is VoiceState.Retrying -> state.notice
         is VoiceState.Failed -> state.message
     }
 

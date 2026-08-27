@@ -13,7 +13,9 @@ CAPTIONS = {
     "05-review": "Review queue — entries the parser wasn't sure about",
     "06-edit": "Edit sheet — original sentence kept, everything correctable",
     "07-final": "Back on the log tab",
-    "08-voice": "Mic tapped — recogniser state and error handling",
+    "08-voice": "Mic tapped — recogniser state and fallback",
+    "09-voice-permission": "Mic without permission — the system prompt",
+    "10-voice-denied": "Permission denied — the app explains why the mic is needed",
 }
 
 
@@ -50,6 +52,10 @@ def main():
         for name, caption in CAPTIONS.items():
             if os.path.exists(f"{SHOTS}/{name}.png"):
                 f.write(f"### {caption}\n\n![{name}](screenshots/{name}.png)\n\n")
+
+        f.write("## What the recogniser reported\n\n```\n")
+        f.write(read("docs/voice-log.txt", tail=40))
+        f.write("\n```\n\n")
 
         f.write("## Instrumented test output\n\n```\n")
         f.write(read("/tmp/androidtest.log", tail=45))

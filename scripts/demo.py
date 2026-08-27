@@ -139,11 +139,32 @@ def main():
     time.sleep(1)
     shot("07-final", "Back on the log, review badge cleared where fixed")
 
-    # The voice path: the emulator image has no speech service, so this
-    # exercises the error handling rather than real recognition.
+    # --- voice: positive attempt, then the permission-denied path --------
+    sh("adb logcat -c")
     tap("Log by voice", label="mic button")
+    time.sleep(8)
+    shot("08-voice", "Mic tapped — recogniser state and fallback")
+
+    voice_log = sh("adb logcat -d -s PaisaVoice:V").stdout.strip()
+    with open("docs/voice-log.txt", "w") as f:
+        f.write(voice_log or "(no PaisaVoice lines)")
+    print("=== PaisaVoice log ===")
+    print(voice_log[-2000:])
+
+    # Negative: revoke the microphone permission and tap the mic again.
+    sh(f"adb shell pm revoke {PKG} android.permission.RECORD_AUDIO")
+    time.sleep(1)
+    sh(f"adb shell am start -n {PKG}/.MainActivity")
+    time.sleep(4)
+    tap("Log by voice", label="mic button (no permission)")
     time.sleep(3)
-    shot("08-voice", "Mic tapped — recogniser state / error handling")
+    shot("09-voice-permission", "Mic without permission — the system prompt appears")
+    # Deny it and check the app explains itself rather than failing silently.
+    if not tap("Don\u2019t allow", exact=False, timeout=6, label="deny"):
+        tap("Deny", exact=False, timeout=6, label="deny")
+    time.sleep(2)
+    shot("10-voice-denied", "Permission denied — the app says why the mic is needed")
+    sh(f"adb shell pm grant {PKG} android.permission.RECORD_AUDIO")
 
     print("walkthrough complete")
     return 0

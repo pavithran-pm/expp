@@ -21,7 +21,13 @@ import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Receipt
 import androidx.compose.material.icons.filled.Stop
+import android.app.Activity
+import androidx.core.app.ActivityCompat
+import com.pavithran.paisa.voice.VoiceRecognizer
 import androidx.compose.material3.Badge
+import android.app.Activity
+import androidx.core.app.ActivityCompat
+import com.pavithran.paisa.voice.VoiceRecognizer
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -84,6 +90,21 @@ fun PaisaApp(
     val monthTotal by viewModel.monthTotal.collectAsStateWithLifecycle()
     val voiceState by viewModel.voiceState.collectAsStateWithLifecycle()
 
+    val systemDialog = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        viewModel.logTranscript(VoiceRecognizer.transcriptFrom(result.data))
+    }
+
+    fun openSystemDialog() {
+        val intent = VoiceRecognizer.systemDialogIntent()
+        if (intent.resolveActivity(context.packageManager) != null) {
+            systemDialog.launch(intent)
+        } else {
+            viewModel.showMessage("This phone has no speech recognition. Type the expense instead.")
+        }
+    }
+
     var pendingVoiceStart by remember { mutableStateOf(false) }
     val micPermission = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -91,7 +112,14 @@ fun PaisaApp(
         if (granted && pendingVoiceStart) {
             viewModel.startListening()
         } else if (!granted) {
-            viewModel.showMessage("Microphone access is needed to log by voice")
+            val activity = context as? Activity
+            val canAskAgain = activity != null && ActivityCompat
+                .shouldShowRequestPermissionRationale(activity, Manifest.permission.RECORD_AUDIO)
+            if (canAskAgain) {
+                viewModel.showMessage("Microphone access is needed to log by voice")
+            } else {
+                viewModel.showMessage("Microphone is blocked. Turn it on in Settings › Permissions.")
+            }
         }
         pendingVoiceStart = false
     }
@@ -105,6 +133,18 @@ fun PaisaApp(
                 duration = SnackbarDuration.Short
             )
             if (result == SnackbarResult.ActionPerformed) message.undo?.invoke()
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.voiceEvents.collect { event ->
+            when (event) {
+                VoiceEvent.RequestPermission -> {
+                    pendingVoiceStart = true
+                    micPermission.launch(Manifest.permission.RECORD_AUDIO)
+                }
+                VoiceEvent.OpenSystemDialog -> openSystemDialog()
+            }
         }
     }
 

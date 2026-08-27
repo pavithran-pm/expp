@@ -24,6 +24,12 @@ import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.YearMonth
 
+/** Something the voice flow needs the screen to do on its behalf. */
+sealed interface VoiceEvent {
+    data object RequestPermission : VoiceEvent
+    data object OpenSystemDialog : VoiceEvent
+}
+
 /** One-shot message for the snackbar, optionally with an Undo action. */
 data class UiMessage(
     val text: String,
@@ -36,6 +42,9 @@ class PaisaViewModel(app: Application) : AndroidViewModel(app) {
 
     private val messages = Channel<UiMessage>(Channel.BUFFERED)
     val uiMessages = messages.receiveAsFlow()
+
+    private val voiceRequests = Channel<VoiceEvent>(Channel.BUFFERED)
+    val voiceEvents = voiceRequests.receiveAsFlow()
 
     val expenses: StateFlow<List<Expense>> = repo.observeAll()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
@@ -160,8 +169,25 @@ class PaisaViewModel(app: Application) : AndroidViewModel(app) {
             onFinalText = { text ->
                 log(text)
                 _voiceState.value = VoiceState.Idle
+            },
+            onNeedsPermission = {
+                viewModelScope.launch { voiceRequests.send(VoiceEvent.RequestPermission) }
+            },
+            onUseSystemDialog = {
+                _voiceState.value = VoiceState.Idle
+                viewModelScope.launch { voiceRequests.send(VoiceEvent.OpenSystemDialog) }
             }
         ).also { it.start() }
+    }
+
+    /** A transcript coming back from the system's own dialog. */
+    fun logTranscript(text: String?) {
+        _voiceState.value = VoiceState.Idle
+        if (text.isNullOrBlank()) {
+            showMessage("Didn't catch that — try again")
+        } else {
+            log(text)
+        }
     }
 
     fun stopListening() {

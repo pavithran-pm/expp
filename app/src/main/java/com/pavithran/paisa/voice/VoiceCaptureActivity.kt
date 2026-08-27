@@ -14,7 +14,7 @@ import com.pavithran.paisa.widget.PaisaWidget
 import kotlinx.coroutines.launch
 
 /**
- * Transparent activity launched by the widget: it starts listening immediately,
+ * Transparent activity launched by the widget: starts listening immediately,
  * saves, and dismisses itself. Unlock, tap, speak — no main screen in between.
  */
 class VoiceCaptureActivity : ComponentActivity() {
@@ -25,6 +25,13 @@ class VoiceCaptureActivity : ComponentActivity() {
         ActivityResultContracts.RequestPermission()
     ) { granted ->
         if (granted) startListening() else finishWith("Microphone permission is needed")
+    }
+
+    private val systemDialog = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        val text = VoiceRecognizer.transcriptFrom(result.data)
+        if (text == null) finishWith("Didn't catch that") else save(text)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -41,10 +48,26 @@ class VoiceCaptureActivity : ComponentActivity() {
         recognizer = VoiceRecognizer(
             context = this,
             onState = { state ->
-                if (state is VoiceState.Failed) finishWith(state.message)
+                when (state) {
+                    is VoiceState.Failed -> finishWith(state.message)
+                    is VoiceState.Retrying -> Toast
+                        .makeText(applicationContext, state.notice, Toast.LENGTH_SHORT).show()
+                    else -> Unit
+                }
             },
-            onFinalText = { text -> save(text) }
+            onFinalText = { text -> save(text) },
+            onNeedsPermission = { micPermission.launch(Manifest.permission.RECORD_AUDIO) },
+            onUseSystemDialog = { openSystemDialog() }
         ).also { it.start() }
+    }
+
+    private fun openSystemDialog() {
+        val intent = VoiceRecognizer.systemDialogIntent()
+        if (intent.resolveActivity(packageManager) != null) {
+            systemDialog.launch(intent)
+        } else {
+            finishWith("This phone has no speech recognition")
+        }
     }
 
     private fun save(rawText: String) {
@@ -66,7 +89,7 @@ class VoiceCaptureActivity : ComponentActivity() {
     }
 
     override fun onDestroy() {
-        // A leaked recognizer holds the mic and breaks the next attempt.
+        // A leaked recogniser holds the mic and breaks the next attempt.
         recognizer?.destroy()
         recognizer = null
         super.onDestroy()

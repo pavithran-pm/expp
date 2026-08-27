@@ -4,6 +4,8 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
@@ -14,83 +16,165 @@ sealed interface VoiceState {
     data object Listening : VoiceState
     data class Hearing(val partial: String) : VoiceState
     data object Processing : VoiceState
+
+    /** Falling back to another engine; the notice explains why. */
+    data class Retrying(val notice: String) : VoiceState
     data class Failed(val message: String) : VoiceState
 }
 
 /**
- * Thin wrapper over [SpeechRecognizer]. Every callback is implemented — an
- * unimplemented onError is why a mic button silently does nothing.
+ * Drives [SpeechRecognizer] through the fallback chain in [VoiceErrorPolicy]:
+ * the offline recogniser first, then the bound service, then the system's own
+ * dialog. A phone that reports offline recognition as available but has no
+ * language pack fails on the first attempt — without the fallback that reaches
+ * the user as a bare error code.
  */
 class VoiceRecognizer(
-    private val context: Context,
+    context: Context,
     private val onState: (VoiceState) -> Unit,
-    private val onFinalText: (String) -> Unit
+    private val onFinalText: (String) -> Unit,
+    private val onNeedsPermission: () -> Unit = {},
+    private val onUseSystemDialog: () -> Unit = {}
 ) {
-    private var recognizer: SpeechRecognizer? = null
-    private var usingOnDevice = false
+    private val appContext = context.applicationContext
+    private val handler = Handler(Looper.getMainLooper())
 
-    private fun create(preferOnDevice: Boolean): SpeechRecognizer? = try {
-        if (preferOnDevice &&
-            Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
-            SpeechRecognizer.isOnDeviceRecognitionAvailable(context)
-        ) {
-            usingOnDevice = true
-            SpeechRecognizer.createOnDeviceSpeechRecognizer(context)
-        } else {
-            usingOnDevice = false
-            if (SpeechRecognizer.isRecognitionAvailable(context)) {
-                SpeechRecognizer.createSpeechRecognizer(context)
-            } else {
-                null
-            }
-        }
-    } catch (e: Exception) {
-        Log.e(TAG, "Could not create recognizer", e)
-        null
+    private var recognizer: SpeechRecognizer? = null
+    private var engine = VoiceEngine.SYSTEM_SERVICE
+    private var attempt = 0
+    private var settled = false
+
+    private val watchdog = Runnable {
+        Log.w(TAG, "no callback within ${WATCHDOG_MS}ms on $engine")
+        handleError(VoiceError.CLIENT)
     }
 
-    fun start(preferOnDevice: Boolean = true) {
-        stop()
-        val speech = create(preferOnDevice)
+    fun start() {
+        attempt = 0
+        settled = false
+        startWith(firstEngine())
+    }
+
+    /** Offline first when the phone claims to support it; the policy handles the rest. */
+    private fun firstEngine(): VoiceEngine = when {
+        Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+            runCatching { SpeechRecognizer.isOnDeviceRecognitionAvailable(appContext) }
+                .getOrDefault(false) -> VoiceEngine.ON_DEVICE
+
+        runCatching { SpeechRecognizer.isRecognitionAvailable(appContext) }
+            .getOrDefault(false) -> VoiceEngine.SYSTEM_SERVICE
+
+        else -> VoiceEngine.SYSTEM_DIALOG
+    }
+
+    private fun startWith(next: VoiceEngine) {
+        engine = next
+        attempt++
+        releaseRecognizer()
+
+        if (next == VoiceEngine.SYSTEM_DIALOG) {
+            Log.d(TAG, "handing over to the system dialog")
+            onUseSystemDialog()
+            return
+        }
+
+        val speech = createRecognizer(next)
         if (speech == null) {
-            onState(VoiceState.Failed("Speech recognition is not available on this phone"))
+            handleError(VoiceError.NONE_AVAILABLE)
             return
         }
         recognizer = speech
         speech.setRecognitionListener(listener)
-        speech.startListening(buildIntent())
+        runCatching { speech.startListening(buildIntent()) }
+            .onFailure {
+                Log.e(TAG, "startListening threw on $next", it)
+                handleError(VoiceError.CLIENT)
+                return
+            }
+        armWatchdog()
         onState(VoiceState.Listening)
     }
 
+    private fun createRecognizer(next: VoiceEngine): SpeechRecognizer? = runCatching {
+        if (next == VoiceEngine.ON_DEVICE && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            SpeechRecognizer.createOnDeviceSpeechRecognizer(appContext)
+        } else {
+            SpeechRecognizer.createSpeechRecognizer(appContext)
+        }
+    }.onFailure { Log.e(TAG, "could not create a $next recogniser", it) }.getOrNull()
+
     private fun buildIntent() = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
         putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-        // Indian English handles local words and accents markedly better than the default.
-        putExtra(RecognizerIntent.EXTRA_LANGUAGE, "en-IN")
-        putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, "en-IN")
+        // Indian English handles local words and accents markedly better.
+        putExtra(RecognizerIntent.EXTRA_LANGUAGE, LANGUAGE)
         putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
         putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
-        putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, context.packageName)
+        putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, appContext.packageName)
+    }
+
+    private fun armWatchdog() {
+        handler.removeCallbacks(watchdog)
+        handler.postDelayed(watchdog, WATCHDOG_MS)
+    }
+
+    private fun cancelWatchdog() = handler.removeCallbacks(watchdog)
+
+    private fun releaseRecognizer() {
+        val current = recognizer ?: return
+        recognizer = null
+        // Never tear down from inside the recogniser's own callback.
+        handler.post {
+            runCatching { current.cancel() }
+            runCatching { current.destroy() }
+        }
+    }
+
+    private fun handleError(error: Int) {
+        cancelWatchdog()
+        if (settled) return
+        Log.w(TAG, "error $error on $engine (attempt $attempt)")
+
+        when (val recovery = VoiceErrorPolicy.recover(error, engine, attempt)) {
+            is VoiceRecovery.NeedsPermission -> {
+                settled = true
+                releaseRecognizer()
+                onState(VoiceState.Failed(VoiceErrorPolicy.messageFor(error, engine)))
+                onNeedsPermission()
+            }
+
+            is VoiceRecovery.Retry -> {
+                recovery.notice?.let { onState(VoiceState.Retrying(it)) }
+                releaseRecognizer()
+                handler.post { startWith(recovery.engine) }
+            }
+
+            is VoiceRecovery.Fail -> {
+                settled = true
+                releaseRecognizer()
+                onState(VoiceState.Failed(recovery.message))
+            }
+        }
     }
 
     fun stop() {
-        recognizer?.let {
-            runCatching { it.stopListening() }
-            runCatching { it.cancel() }
-            runCatching { it.destroy() }
-        }
-        recognizer = null
+        settled = true
+        cancelWatchdog()
+        recognizer?.let { runCatching { it.stopListening() } }
+        releaseRecognizer()
     }
 
-    /** Must be called from onDispose — a leaked recognizer holds the microphone. */
+    /** Must be called when the screen goes away — a leaked recogniser holds the mic. */
     fun destroy() = stop()
 
     private val listener = object : RecognitionListener {
         override fun onReadyForSpeech(params: Bundle?) {
-            Log.d(TAG, "ready for speech")
+            cancelWatchdog()
+            Log.d(TAG, "ready for speech on $engine")
             onState(VoiceState.Listening)
         }
 
         override fun onBeginningOfSpeech() {
+            cancelWatchdog()
             Log.d(TAG, "beginning of speech")
         }
 
@@ -103,61 +187,27 @@ class VoiceRecognizer(
             onState(VoiceState.Processing)
         }
 
-        override fun onError(error: Int) {
-            Log.w(TAG, "recognizer error $error (onDevice=$usingOnDevice)")
-            when (error) {
-                SpeechRecognizer.ERROR_NO_MATCH ->
-                    onState(VoiceState.Failed("Didn't catch that — try again"))
-
-                SpeechRecognizer.ERROR_SPEECH_TIMEOUT ->
-                    onState(VoiceState.Failed("No speech detected"))
-
-                SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS ->
-                    onState(VoiceState.Failed("Microphone permission is needed to log by voice"))
-
-                SpeechRecognizer.ERROR_NETWORK, SpeechRecognizer.ERROR_NETWORK_TIMEOUT -> {
-                    if (usingOnDevice) {
-                        onState(VoiceState.Failed("Offline recognition failed — try again"))
-                    } else {
-                        // On-device pack may exist even when the network path fails.
-                        Log.d(TAG, "network error, retrying on-device")
-                        start(preferOnDevice = true)
-                    }
-                }
-
-                SpeechRecognizer.ERROR_RECOGNIZER_BUSY -> {
-                    stop()
-                    onState(VoiceState.Failed("Recogniser was busy — tap the mic again"))
-                }
-
-                SpeechRecognizer.ERROR_AUDIO ->
-                    onState(VoiceState.Failed("Microphone problem — try again"))
-
-                SpeechRecognizer.ERROR_CLIENT ->
-                    onState(VoiceState.Failed("Recognition stopped"))
-
-                SpeechRecognizer.ERROR_SERVER ->
-                    onState(VoiceState.Failed("Speech service error"))
-
-                else -> onState(VoiceState.Failed("Could not hear that (error $error)"))
-            }
-        }
+        override fun onError(error: Int) = handleError(error)
 
         override fun onResults(results: Bundle?) {
+            cancelWatchdog()
             val text = results
                 ?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
                 ?.firstOrNull()
                 .orEmpty()
             Log.d(TAG, "final result: '$text'")
             if (text.isBlank()) {
-                onState(VoiceState.Failed("Didn't catch that — try again"))
-            } else {
-                onState(VoiceState.Processing)
-                onFinalText(text)
+                handleError(VoiceError.NO_MATCH)
+                return
             }
+            settled = true
+            releaseRecognizer()
+            onState(VoiceState.Processing)
+            onFinalText(text)
         }
 
         override fun onPartialResults(partialResults: Bundle?) {
+            cancelWatchdog()
             val text = partialResults
                 ?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
                 ?.firstOrNull()
@@ -168,7 +218,26 @@ class VoiceRecognizer(
         override fun onEvent(eventType: Int, params: Bundle?) = Unit
     }
 
-    private companion object {
-        const val TAG = "PaisaVoice"
+    companion object {
+        private const val TAG = "PaisaVoice"
+        private const val WATCHDOG_MS = 12_000L
+        const val LANGUAGE = "en-IN"
+
+        /** The intent for the system's own "Speak now" screen. */
+        fun systemDialogIntent(): Intent =
+            Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                putExtra(
+                    RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+                    RecognizerIntent.LANGUAGE_MODEL_FREE_FORM
+                )
+                putExtra(RecognizerIntent.EXTRA_LANGUAGE, LANGUAGE)
+                putExtra(RecognizerIntent.EXTRA_PROMPT, "Say the expense")
+            }
+
+        /** Pulls the transcript out of a system dialog result. */
+        fun transcriptFrom(data: Intent?): String? = data
+            ?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
+            ?.firstOrNull()
+            ?.takeIf { it.isNotBlank() }
     }
 }
